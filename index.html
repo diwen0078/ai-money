@@ -120,7 +120,7 @@ body{font-family:-apple-system,Helvetica,Arial,sans-serif;background:#0d0d0d;col
 
 <!-- 二维码 -->
 <div class="qr-area" id="qrArea">
-  <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&amp;data=https://qomccm6s.kuafuai.net" alt="二维码">
+  <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&amp;data=https://diwen0078.github.io/ai-money/" alt="二维码">
   <div class="qr-t">扫码分享给朋友</div>
 </div>
 
@@ -256,10 +256,10 @@ function fmtTime(t){ var d=new Date(t); return d.getMonth()+1+'月'+d.getDate()+
 // ====== 二维码点击 ======
 document.getElementById('qrArea').addEventListener('click',function(){
   if(navigator.share){
-    navigator.share({title:'教你用AI搞钱',text:'南宁AI实战圈子，扫码加入！',url:'https://qomccm6s.kuafuai.net'});
+    navigator.share({title:'教你用AI搞钱',text:'南宁AI实战圈子，扫码加入！',url:'https://diwen0078.github.io/ai-money/'});
   } else {
     var i = document.createElement('input');
-    i.value = 'https://qomccm6s.kuafuai.net';
+    i.value = 'https://diwen0078.github.io/ai-money/';
     document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
     alert('链接已复制');
   }
