@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>教你用AI搞钱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,Helvetica,Arial,sans-serif;background:#0d0d0d;color:#eee;padding-bottom:75px}
+
+/* ===== 顶部 ===== */
+.top{background:linear-gradient(135deg,#1a0a0a 0%,#2d1500 50%,#1a0a0a 100%);padding:18px 14px 16px;text-align:center;position:relative;overflow:hidden}
+.top::before{content:'';position:absolute;top:-40%;left:-20%;width:140%;height:140%;background:radial-gradient(ellipse at 30% 20%,rgba(255,100,0,0.06) 0%,transparent 60%);pointer-events:none}
+.top-badge{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:6px;margin-bottom:4px;position:relative;z-index:1}
+.top-badge2{font-size:12px;font-weight:700;letter-spacing:4px;margin-bottom:6px;position:relative;z-index:1;background:linear-gradient(90deg,#ffcc66,#ffaa33);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.top h1{font-size:22px;font-weight:900;margin-bottom:2px;position:relative;z-index:1;background:linear-gradient(135deg,#ff6b00,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.top p{font-size:12px;opacity:.7;position:relative;z-index:1;color:rgba(255,255,255,0.6)}
+.top .sub{font-size:11px;margin-top:6px;opacity:.4;position:relative;z-index:1;letter-spacing:2px}
+
+/* ===== 两板块概览 ===== */
+.features{display:flex;gap:8px;padding:12px 10px 8px}
+.feature{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center;cursor:pointer}
+.feature .fi{font-size:20px;margin-bottom:3px}
+.feature .ft{font-size:12px;font-weight:600;color:#fff}
+.feature .fd{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px}
+.feature.money{border-color:rgba(255,107,0,0.25);background:rgba(255,107,0,0.05)}
+.feature.psy{border-color:rgba(100,200,255,0.2);background:rgba(100,200,255,0.04)}
+
+/* 二维码区 */
+.qr-area{text-align:center;padding:8px 0;margin:0 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer}
+.qr-area img{width:72px;height:72px;border-radius:6px;display:block;margin:0 auto}
+.qr-area .qr-t{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;letter-spacing:1px}
+
+/* 分类 */
+.cats{display:flex;gap:6px;padding:10px 10px 6px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.cats::-webkit-scrollbar{display:none}
+.cat{display:inline-block;padding:5px 12px;border-radius:14px;font-size:12px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);cursor:pointer;flex-shrink:0}
+.cat.on{background:linear-gradient(135deg,#ff6b00,#ff8800);color:#fff;font-weight:600}
+
+/* 新帖按钮 */
+.new-btn{position:fixed;right:16px;bottom:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ff6b00,#ffaa00);color:#fff;border:none;font-size:26px;box-shadow:0 4px 16px rgba(255,107,0,.4);cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center}
+
+/* 帖子列表 */
+.posts{padding:6px 10px}
+.post{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer}
+.post .h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.post .h .t{font-size:15px;font-weight:600;flex:1;line-height:1.3;color:#eee}
+.post .h .tag{font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(255,107,0,0.12);color:#ff8800;white-space:nowrap;margin-left:8px;flex-shrink:0}
+.post .c{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
+.post .f{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3)}
+.post .f .n{color:#ff8800;font-weight:500}
+
+.empty{text-align:center;padding:50px 20px;color:rgba(255,255,255,0.2);font-size:13px}
+.empty .icon{font-size:48px;margin-bottom:10px}
+
+/* 弹窗 */
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:98;justify-content:center;align-items:flex-end}
+.overlay.s{display:flex}
+.sheet{background:#1a1a1a;width:100%;max-width:450px;border-radius:16px 16px 0 0;padding:18px;max-height:85vh;overflow-y:auto;animation:up .25s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet h3{font-size:16px;font-weight:600;margin-bottom:14px;text-align:center;color:#eee}
+.field{margin-bottom:12px}
+.field label{font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:14px;outline:none;font-family:inherit;background:rgba(255,255,255,0.05);color:#eee}
+.field textarea{min-height:80px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#ff6b00}
+.field select option{background:#1a1a1a;color:#eee}
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,#ff6b00,#ffaa00);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn:active{opacity:.8}
+
+/* 详情页 */
+.detail-post{padding:0}
+.detail-post .dp-h{padding:14px 0 10px}
+.detail-post .dp-h .dp-t{font-size:18px;font-weight:700;margin-bottom:4px;color:#eee}
+.detail-post .dp-h .dp-m{font-size:11px;color:rgba(255,255,255,0.4);display:flex;gap:10px;flex-wrap:wrap}
+.detail-post .dp-h .dp-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(255,107,0,0.12);color:#ff8800}
+.detail-post .dp-c{font-size:14px;line-height:1.6;color:rgba(255,255,255,0.7);padding:0 0 14px}
+.detail-post .dp-reply-title{font-size:14px;font-weight:600;color:#ccc;margin-bottom:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
+.detail-post .reply{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.detail-post .reply:last-child{border:none}
+.detail-post .reply .r-n{font-size:12px;color:#ff8800;font-weight:500;margin-bottom:2px}
+.detail-post .reply .r-c{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.4}
+.detail-post .reply .r-t{font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px}
+.reply-form{display:flex;gap:8px;padding:10px 0;position:sticky;bottom:0;background:#1a1a1a}
+.reply-form input{flex:1;padding:8px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:13px;outline:none;background:rgba(255,255,255,0.05);color:#eee}
+.reply-form input:focus{border-color:#ff6b00}
+.reply-form button{padding:8px 14px;background:linear-gradient(135deg,#ff6b00,#ff8800);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.loading{text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:12px}
+.close-btn{position:fixed;top:50px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:18px;z-index:99;cursor:pointer;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-badge">全 国 首 个</div>
+  <div class="top-badge2">本 地 AI 实 战 交 流 圈</div>
+  <h1>教你用AI搞钱🔥</h1>
+  <p>各有所长 · 互相教学 · 一起搞钱</p>
+  <div class="sub">南宁 · AI实战圈子 · 扫码即入</div>
+</div>
+
+<!-- 两个核心板块 -->
+<div class="features">
+  <div class="feature money">
+    <div class="fi">💰</div>
+    <div class="ft">搞钱实战</div>
+    <div class="fd">AI炒股·副业·短视频变现</div>
+  </div>
+  <div class="feature psy">
+    <div class="fi">🧠</div>
+    <div class="ft">随时倾诉</div>
+    <div class="fd">AI心理辅导·深夜有人听</div>
+  </div>
+  <div class="feature" style="border-color:rgba(200,150,255,0.2);background:rgba(200,150,255,0.04)">
+    <div class="fi">🔮</div>
+    <div class="ft">AI看相算命</div>
+    <div class="fd">AI手相·面相·八字解析</div>
+  </div>
+</div>
+
+<!-- 二维码 -->
+<div class="qr-area" id="qrArea">
+  <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&amp;data=https://qomccm6s.kuafuai.net" alt="二维码">
+  <div class="qr-t">扫码分享给朋友</div>
+</div>
+
+<div class="cats" id="cats"></div>
+
+<div class="posts" id="posts"></div>
+
+<button class="new-btn" id="newBtn">+</button>
+
+<div class="overlay" id="postOverlay">
+  <div class="sheet" style="position:relative">
+   <button class="close-btn" id="postClose" style="position:absolute;top:8px;right:14px;width:30px;height:30px;font-size:16px">x</button>
+   <h3>🚀 发布新帖</h3>
+    <div class="field">
+      <label>你的昵称</label>
+      <input id="nickInput" placeholder="取个昵称吧" maxlength="12">
+    </div>
+    <div class="field">
+      <label>分类</label>
+      <select id="catSelect"></select>
+    </div>
+    <div class="field">
+      <label>标题</label>
+      <input id="titleInput" placeholder="一句话说清楚" maxlength="50">
+    </div>
+    <div class="field">
+      <label>内容</label>
+      <textarea id="contentInput" placeholder="详细说说你的分享、问题或心事..." rows="4"></textarea>
+    </div>
+    <button class="btn" id="submitBtn">💥 发布</button>
+  </div>
+</div>
+
+<div class="overlay" id="detailOverlay">
+  <div class="sheet" style="padding-bottom:70px;position:relative">
+    <button class="close-btn" id="detailClose" style="position:absolute;top:8px;right:14px;width:30px;height:30px;font-size:16px;background:rgba(0,0,0,.5)">x</button>
+    <div class="detail-post" id="detailContent"></div>
+    <div class="reply-form">
+      <input id="replyInput" placeholder="写回复..." maxlength="200">
+      <button id="replyBtn">回复</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== 分类 ======
+var CATS = ['💰搞钱实战','🎬短视频变现','🧠心理辅导','🔮AI玄学','✍️AI写作','🎨AI设计','💻AI编程','💬闲聊交流'];
+var curCat = '全部';
+var allPosts = [];
+var detailId = null;
+
+// ====== 昵称 ======
+function getNick(){
+  var n = localStorage.getItem('myNick') || '';
+  if(!n){ n = '圈友' + Math.random().toString(36).substring(2,6); localStorage.setItem('myNick',n); }
+  return n;
+}
+
+// ====== 内置种子数据 ======
+var SEED_DATA = {"posts":[{"id":"100001","title":"尾盘选股法，每天尾盘10分钟搞定","content":"分享一个我用AI辅助的尾盘选股法：下午2:30后用AI筛选缩量阴线回踩10日线的票，第二天早盘冲高就跑。我已经用这个方法稳定赚了两个月。核心：1.尾盘看量能 2.AI筛选符合条件个股 3.第二天机械化卖出。想学的留言交流。","cat":"💰搞钱实战","nick":"尾盘战神","time":1722796800000,"replies":[{"nick":"新手小陈","content":"怎么用AI筛选？能教一下吗","time":1722800400000},{"nick":"尾盘战神","content":"我用的妙想金融，设好条件自动筛选，你也可以试试","time":1722804000000}]},{"id":"100002","title":"AI做短视频带货，第一个月赚了3000","content":"纯小白，完全不懂剪辑。用AI写文案+AI生成视频，发在抖音带货。第一个月纯利3000+，虽然不多但给了我信心。分享我的流程：1.AI写带货脚本 2.可灵AI生成视频素材 3.剪映简单拼接。有想搞短视频的一起交流。","cat":"🎬短视频变现","nick":"带货小白","time":1722793200000,"replies":[{"nick":"也也想搞钱","content":"厉害！用的什么AI写文案？","time":1722796800000},{"nick":"带货小白","content":"用的Claude和Kimi，两个换着用","time":1722800400000}]},{"id":"100003","title":"心情不好的时候，试试跟AI聊聊","content":"最近创业压力大，失眠了好几天。无意中试了跟AI聊心事，没想到效果出奇好。它不会评判你，不会打断你，24小时在线。我聊完之后整个人轻松了很多。如果你现在也在低谷，别憋着，试试找个AI聊一聊。这里也欢迎大家互相倾诉。","cat":"🧠心理辅导","nick":"正在上岸","time":1722789600000,"replies":[{"nick":"小龙虾","content":"抱抱，创业都不容易，挺住！","time":1722793200000},{"nick":"匿名树洞","content":"我也是，跟AI聊完之后哭了很久，但哭完好多了","time":1722796800000}]},{"id":"100004","title":"用AI写小红书爆款文案，接一条商单500","content":"我的副业：用AI帮品牌写小红书种草文案。流程很简单：1.跟AI描述产品特点 2.输入目标人群 3.AI生成3个版本 4.微调发布。现在稳定月入2000+，接一条商单500左右。有想做文案副业的可以交流。","cat":"✍️AI写作","nick":"文案自由人","time":1722786000000,"replies":[{"nick":"宝妈小芳","content":"怎么接单？能带带吗","time":1722789600000},{"nick":"文案自由人","content":"先去小红书发几篇爆款，自然有人找上门","time":1722793200000}]},{"id":"100005","title":"AI设计铜壶花纹，手工艺人的新武器","content":"我是做铜壶手工艺的，以前设计花纹全靠手画，一天出不来几个方案。现在用AI出图，一分钟几十个方案让我挑。效率翻了好几倍，客户满意度也高了。有做手工艺的朋友欢迎交流AI设计经验。","cat":"🎨AI设计","nick":"铜匠老李","time":1722782400000,"replies":[]},{"id":"100006","title":"零基础用AI写代码，一个月接了3个外包","content":"完全零代码基础，靠AI编程辅助接外包。第一个月接了3个小项目，总共赚了4500。工具推荐：Cursor（AI编辑器）+ Claude（写代码）。不懂代码没关系，AI会一步步教你。关键是要学会怎么跟AI描述你的需求。","cat":"💻AI编程","nick":"半路出家","time":1722778800000,"replies":[{"nick":"程序员老张","content":"AI编程确实是趋势，零基础也能上手","time":1722782400000}]},{"id":"100008","title":"AI看手相准不准？我试了三次说说感受","content":"刷到好几个AI看手相的，好奇试了三次。第一次说我有财运线但要注意小人，第二次说我生命线长但肠胃要注意，第三次说我感情线有波折。前两次还真有点准...第三次存疑哈哈。不过挺好玩的，当个参考可以，别太当真。有玩过的来聊聊准不准？","cat":"🔮AI玄学","nick":"好奇宝宝","time":1722771600000,"replies":[{"nick":"命理爱好者","content":"我也试过，感觉AI就是根据手纹特征套模板说的，但有时候歪打正着","time":1722775200000}]},{"id":"100007","title":"南宁线下局，约个时间一起搞钱","content":"群里的南宁兄弟们，要不要约个线下见面？互相认识一下，分享各自用AI搞钱的经验。我会带电脑现场演示尾盘选股法，有想学短视频、AI设计的也可以来教。地点暂定朝阳广场附近，有意向的报名！","cat":"💬闲聊交流","nick":"搞钱小队长","time":1722775200000,"replies":[{"nick":"西乡塘阿杰","content":"报名！我教大家用AI做短视频","time":1722778800000},{"nick":"青秀区老王","content":"我也可以教AI炒股分析","time":1722782400000},{"nick":"江南小李","content":"周六下午可以吗？","time":1722786000000}]}]};
+
+// ====== 加载数据 ======
+function loadData(){
+  allPosts = (SEED_DATA.posts || []).slice();
+  var localPosts = JSON.parse(localStorage.getItem('myPosts') || '[]');
+  localPosts.forEach(function(p){ allPosts.push(p); });
+  renderCats();
+  renderPosts();
+}
+
+// ====== 分类渲染 ======
+function renderCats(){
+  var h = '<span class="cat on" data-cat="全部">全部</span>';
+  CATS.forEach(function(c){ h += '<span class="cat" data-cat="' + c + '">' + c + '</span>'; });
+  document.getElementById('cats').innerHTML = h;
+  var sel = document.getElementById('catSelect');
+  sel.innerHTML = CATS.map(function(c){ return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  document.querySelectorAll('.cat').forEach(function(el){
+    el.addEventListener('click', function(){
+      curCat = this.getAttribute('data-cat');
+      document.querySelectorAll('.cat').forEach(function(x){ x.className = 'cat'; });
+      this.className = 'cat on';
+      renderPosts();
+    });
+  });
+}
+
+// ====== 帖子列表 ======
+function renderPosts(){
+  var list = allPosts;
+  if(curCat !== '全部') list = list.filter(function(p){ return p.cat === curCat; });
+  list.sort(function(a,b){ return b.time - a.time; });
+  var cont = document.getElementById('posts');
+  if(list.length === 0){
+    cont.innerHTML = '<div class="empty"><div class="icon">🚀</div><p>还没有帖子，快来发第一条吧！</p></div>';
+    return;
+  }
+  var h = '';
+  list.forEach(function(p){
+    var content = (p.content || '').substring(0,100);
+    if((p.content||'').length > 100) content += '...';
+    h += '<div class="post" data-id="' + p.id + '"><div class="h"><div class="t">' + esc(p.title) + '</div><div class="tag">' + esc(p.cat) + '</div></div><div class="c">' + esc(content) + '</div><div class="f"><span class="n">' + esc(p.nick) + '</span><span>' + (p.replies ? p.replies.length : 0) + ' 回复 · ' + fmtTime(p.time) + '</span></div></div>';
+  });
+  cont.innerHTML = h;
+  cont.querySelectorAll('.post').forEach(function(el){
+    el.addEventListener('click', function(){ showDetail(this.getAttribute('data-id')); });
+  });
+}
+
+// ====== 帖子详情 ======
+function showDetail(id){
+  detailId = id;
+  var p = null;
+  for(var i=0;i<allPosts.length;i++){ if(allPosts[i].id === id){ p = allPosts[i]; break; } }
+  if(!p){ alert('帖子不见了'); return; }
+  var h = '<div class="dp-h"><div class="dp-t">' + esc(p.title) + '</div><div class="dp-m"><span class="dp-tag">' + esc(p.cat) + '</span><span>' + esc(p.nick) + '</span><span>' + fmtTime(p.time) + '</span></div></div><div class="dp-c">' + esc(p.content) + '</div>';
+  if(p.replies && p.replies.length > 0){
+    h += '<div class="dp-reply-title">💬 ' + p.replies.length + ' 条回复</div>';
+    p.replies.forEach(function(r){
+      h += '<div class="reply"><div class="r-n">' + esc(r.nick) + '</div><div class="r-c">' + esc(r.content) + '</div><div class="r-t">' + fmtTime(r.time) + '</div></div>';
+    });
+  } else {
+    h += '<div class="dp-reply-title" style="color:rgba(255,255,255,0.3)">还没有回复，抢个沙发吧</div>';
+  }
+  document.getElementById('detailContent').innerHTML = h;
+  document.getElementById('detailOverlay').className = 'overlay s';
+}
+
+// ====== 工具函数 ======
+function esc(s){ if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(t){ var d=new Date(t); return d.getMonth()+1+'月'+d.getDate()+'日'; }
+
+// ====== 二维码点击 ======
+document.getElementById('qrArea').addEventListener('click',function(){
+  if(navigator.share){
+    navigator.share({title:'教你用AI搞钱',text:'南宁AI实战圈子，扫码加入！',url:'https://qomccm6s.kuafuai.net'});
+  } else {
+    var i = document.createElement('input');
+    i.value = 'https://qomccm6s.kuafuai.net';
+    document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+    alert('链接已复制');
+  }
+});
+
+// ====== 发布 ======
+document.getElementById('newBtn').addEventListener('click',function(){
+  document.getElementById('postOverlay').className = 'overlay s';
+  var n = getNick();
+  document.getElementById('nickInput').value = n;
+});
+document.getElementById('postClose').addEventListener('click',function(){ document.getElementById('postOverlay').className = 'overlay'; });
+document.getElementById('detailClose').addEventListener('click',function(){ document.getElementById('detailOverlay').className = 'overlay'; });
+document.getElementById('submitBtn').addEventListener('click',function(){
+  var nick = document.getElementById('nickInput').value.trim() || getNick();
+  var cat = document.getElementById('catSelect').value;
+  var title = document.getElementById('titleInput').value.trim();
+  var content = document.getElementById('contentInput').value.trim();
+  if(!title || !content){ alert('标题和内容不能为空'); return; }
+  localStorage.setItem('myNick', nick);
+  var post = { id: 'u' + Date.now(), title: title, content: content, cat: cat, nick: nick, time: Date.now(), replies: [] };
+  var localPosts = JSON.parse(localStorage.getItem('myPosts') || '[]');
+  localPosts.push(post);
+  localStorage.setItem('myPosts', JSON.stringify(localPosts));
+  allPosts.push(post);
+  document.getElementById('postOverlay').className = 'overlay';
+  document.getElementById('titleInput').value = '';
+  document.getElementById('contentInput').value = '';
+  renderPosts();
+});
+
+// ====== 回复 ======
+document.getElementById('replyBtn').addEventListener('click',function(){
+  var text = document.getElementById('replyInput').value.trim();
+  if(!text){ alert('写点什么吧'); return; }
+  var nick = getNick();
+  for(var i=0;i<allPosts.length;i++){
+    if(allPosts[i].id === detailId){
+      if(!allPosts[i].replies) allPosts[i].replies = [];
+      allPosts[i].replies.push({ nick: nick, content: text, time: Date.now() });
+      // 更新localStorage
+      var localPosts = JSON.parse(localStorage.getItem('myPosts') || '[]');
+      for(var j=0;j<localPosts.length;j++){
+        if(localPosts[j].id === detailId){
+          localPosts[j].replies = allPosts[i].replies;
+          localStorage.setItem('myPosts', JSON.stringify(localPosts));
+          break;
+        }
+      }
+      document.getElementById('replyInput').value = '';
+      showDetail(detailId);
+      renderPosts();
+      return;
+    }
+  }
+});
+
+// ====== 启动 ======
+loadData();
+</script>
+</body>
+</html>
