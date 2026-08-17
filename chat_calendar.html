@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小龙虾 · 聊天记录</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#fff; color:#111; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .page { max-width:720px; margin:0 auto; height:100%; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* 顶部 */
+  /* 密码锁 */
+  #lock { position:fixed; inset:0; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:999; }
+  #lock h3 { color:#111; font-size:16px; }
+  #lock input { border:1px solid #ddd; border-radius:18px; padding:10px 14px; font-size:18px; width:200px; text-align:center; outline:none; }
+  #lock button { background:#07c160; color:#fff; border:none; border-radius:18px; padding:9px 30px; font-size:15px; cursor:pointer; }
+  #lock .err { color:#e00000; font-size:12px; min-height:16px; }
+  .nav { display:flex; align-items:center; padding:12px 14px; border-bottom:1px solid #eee; }
+  .nav .back { font-size:26px; line-height:1; color:#111; cursor:pointer; padding:0 6px; user-select:none; }
+  .nav .title { flex:1; text-align:center; font-size:17px; font-weight:700; }
+
+  /* ===== 日历视图 ===== */
+  #viewCal { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .month-picker { display:flex; align-items:center; justify-content:center; padding:10px 0 4px; color:#888; font-size:15px; }
+  .month-picker .arr { cursor:pointer; padding:4px 14px; font-size:16px; color:#444; user-select:none; }
+  .month-picker .label { min-width:110px; text-align:center; }
+  .week { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; color:#999; font-size:12px; padding:6px 0; border-bottom:1px solid #f2f2f2; }
+  .month-block { margin-top:6px; }
+  .month-name { padding:10px 14px 4px; color:#999; font-size:13px; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; padding:0 10px; }
+  .cal-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:14px; color:#d0d0d0; border-radius:8px; position:relative; cursor:default; }
+  .cal-cell.has { color:#111; font-weight:700; cursor:pointer; }
+  .cal-cell.has:hover { background:#f0f0f0; }
+  .cal-cell.today { background:#07c160; color:#fff; font-weight:700; }
+  .cal-cell .today-tag { position:absolute; bottom:1px; font-size:9px; color:#07c160; font-weight:normal; }
+  .cal-cell.today .today-tag { color:#07c160; }
+  .hint { text-align:center; color:#999; font-size:12px; padding:14px; }
+
+  /* ===== 列表视图 ===== */
+  #viewList { display:none; flex:1; flex-direction:column; min-height:0; }
+  .searchbox { width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:18px; font-size:14px; outline:none; background:#fff; color:#111; margin:8px 14px; }
+  .screen { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 10px 30px; }
+  .row { display:flex; margin:10px 0; }
+  .row.user { justify-content:flex-end; }
+  .avatar { width:34px; height:34px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  .row.user .avatar { order:2; margin-left:8px; background:#e8f5e9; }
+  .row.bot .avatar { margin-right:8px; background:#e3f2fd; }
+  .bubble { max-width:76%; padding:8px 12px; border-radius:8px; font-size:14px; line-height:1.6; word-break:break-word; white-space:pre-wrap; color:#111; }
+  .row.user .bubble { background:#fff; border:1px solid #b2dfdb; border-left:4px solid #07c160; border-top-right-radius:2px; }
+  .row.bot .bubble { background:#fff; border:1px solid #e0e0e0; border-left:4px solid #42a5f5; border-top-left-radius:2px; }
+  .who-line { font-size:10px; color:#999; display:block; margin-bottom:2px; }
+  .matched { background:#fffbe6 !important; }
+  .empty { text-align:center; color:#999; padding:40px 0; font-size:14px; }
+</style>
+</head>
+<body>
+<div id="lock">
+  <h3>🔒 请输入访问密码</h3>
+  <input id="pw" type="text" inputmode="numeric" placeholder="访问密码" autocomplete="off">
+  <button id="pwBtn">进 入</button>
+  <div class="err" id="pwErr"></div>
+</div>
+<div class="page">
+
+  <!-- ======== 日历视图 ======== -->
+  <div id="viewCal">
+    <div class="nav">
+      <span class="back" style="visibility:hidden;">‹</span>
+      <div class="title">按日期查找</div>
+    </div>
+    <div class="month-picker">
+      <span class="arr" id="prevM">‹</span>
+      <span class="label" id="monthLabel"></span>
+      <span class="arr" id="nextM">›</span>
+    </div>
+    <div class="week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div id="calBody"></div>
+    <div class="hint">● 黑色加粗 = 有聊天记录（点击可查看）；绿色圆 = 今天</div>
+  </div>
+
+  <!-- ======== 列表视图 ======== -->
+  <div id="viewList">
+    <div class="nav">
+      <span class="back" id="btnBack">‹</span>
+      <div class="title" id="listTitle"></div>
+    </div>
+    <input class="searchbox" id="search" placeholder="🔍 输入关键词搜索当天记录">
+    <div class="screen" id="chat"></div>
+  </div>
+
+</div>
+
+<script>
+// ===== 记录数据：key = 日期，val = 当天对话列表 =====
+const DB = {
+"2026-08-17": [
+  {t:"09:41",who:"user",m:"根据今天的行情，赶紧帮我去选出5只后期会上涨的股票"},
+  {t:"09:41",who:"bot",m:"今天主线=AI光通信/CPO。盘中选出5只（按风险低到高）：①中天科技600522（PE38、多头排列）②亨通光电600487（PE49、放量强）③新易盛300502（弹性大、超跌反弹）④中际旭创300308（龙头最稳但价高）⑤天孚通信300394（最强但短线过热、勿追高）。环境偏暖，分批低吸，不构成投资建议。"},
+  {t:"10:00",who:"user",m:"腾讯控股是不是跌到底了？后期要涨没有？"},
+  {t:"10:00",who:"bot",m:"腾讯00700 现价444.20（+0.95%），PE15.16历史低位，距高点675回撤34%、离低点411仅8%，已到底部区域。可分批低吸别一把，支撑411跌破离场。长线向上概率大但短线或磨底。不构成投资建议。"},
+  {t:"10:39",who:"user",m:"金田股份为什么连涨两天？"},
+  {t:"10:39",who:"bot",m:"金田601609 连涨：①稀土永磁板块共振（出口管制+价差）②铜加工龙头+稀土磁材+算力散热多概念③2025净利+50%④主力净流入3.15亿。题材属性强，短线偏热勿追高。不构成投资建议。"},
+  {t:"10:50",who:"user",m:"用妙想看虚拟仓，分析各股，涨得多的是哪个、原因"},
+  {t:"10:50",who:"bot",m:"虚拟仓总资产105.07万。涨最多=德明利001309 +8.57%。原因：存储国产替代+AI存储+Q1净利+4943%+机构抱团，属妖股反弹；已盈约9%，勿追高可分批止盈。"},
+  {t:"12:10",who:"user",m:"（发来《A股长慢牛底层逻辑第三集》文案）"},
+  {t:"12:10",who:"bot",m:"梳理核心：长慢牛四要素=①宏观（股权财政/化债）②资金（居民储蓄170万亿）③科技（市盈率是生产力）④制度（核心短板）。逻辑：宏观不缺、资金不缺、科技在爆发，就差制度。"},
+  {t:"14:01",who:"user",m:"用妙看虚拟仓，点评今天操盘+明天提示"},
+  {t:"14:01",who:"bot",m:"今日4笔：卖兆威止损、买中芯+1000、卖德明利止盈@433.6（漂亮）、买香农芯创。收盘三只全红（香农+2.16%晶方+4.89%中芯+3.04%）。明日：香农守170破168止损，晶方勿追回调34.4支撑，中芯看140压力。节奏漂亮。"},
+  {t:"14:08",who:"user",m:"搜国内利好股市的消息"},
+  {t:"14:08",who:"bot",m:"利好：①央行1万亿买断式逆回购+降准降息预期②存储/算力/半导体业绩爆发③8/20半导体大会窗口。主线=AI算力+存储。注意资金极致分化，科技强消费弱。"},
+  {t:"15:12",who:"user",m:"分析一下东芯股份"},
+  {t:"15:12",who:"bot",m:"东芯688110 收盘125.99(+7.6%)。中报扭亏6.4-6.8亿、Q2净利环增262-291%、存储量价齐升+国产替代。技术多头但KDJ超买。勿追阳线，回踩117-120分批，破110观望。不构成投资建议。"},
+  {t:"15:18",who:"user",m:"虚拟仓收盘点评+明天预判"},
+  {t:"15:18",who:"bot",m:"收盘105.40万。高抛低吸漂亮：止盈德明利、止损兆威、换中芯/香农。明日环境偏暖但防冲高回落，盯香农168、中芯140，涨多落袋勿追。不构成投资建议。"},
+  {t:"16:58",who:"user",m:"尿酸560、脚痛，是不是痛风？饮食注意啥"},
+  {t:"16:58",who:"bot",m:"高度符合痛风急性发作。现在先就医把急性疼痛压下去、规范用药。饮食：戒啤酒/甜饮料/浓汤/内脏/海鲜，多喝水2000-3000ml，控体重。要治本需长期降尿酸。已记入健康档案。也请到大医院规范用药治疗。"},
+  {t:"17:08",who:"user",m:"北交所指数叫什么？多少只股票？"},
+  {t:"17:08",who:"bot",m:"北交所主力指数=北证50(899050)。上市公司约333家(2026-08官网)，多以专精特新、制造业为主。"},
+  {t:"17:19",who:"user",m:"茅台怎么跌这么狠？后续还跌不？有负面消息吗？"},
+  {t:"17:19",who:"bot",m:"茅台600519 今日-3.64%破1300。三重重击：①半年报增收不增利（净利-1.95%、Q2净利-6.9%）②汇金/证金退出前十大股东③白酒筑底+资金切科技。短线还有下探（看1270-1280支撑），但PE19.85历史低位、空间有限。别接飞刀，等企稳放量收阳，分批。不构成投资建议。"},
+  {t:"17:22",who:"user",m:"播报中断后怎么接着断点读？"},
+  {t:"17:22",who:"bot",m:"明白。以后中断后您说接着读，我从断点续讲不重头；内容丢失会老实说，不硬编。触发语：接着上次读/从XX继续。已记偏好。"},
+  {t:"17:28",who:"user",m:"分析还是按原来完整给，别分段"},
+  {t:"17:28",who:"bot",m:"好，分析保持原来一整个完整呈现，不拆段变形；播报停了您告诉断点续接。已改回原样。"},
+  {t:"18:10",who:"user",m:"如果你手里有十万块钱炒股"},
+  {t:"18:10",who:"bot",m:"按您风格给思路：留30%现金+40%核心压光通信主线+30%进攻打存储半导体。三条铁律：分批不重仓、设止损、不追高。是思路分享非荐股。不构成投资建议。"},
+  {t:"18:10",who:"user",m:"去备忘录研究透'10万块钱炒股'方案再分析"},
+  {t:"18:10",who:"bot",m:"备忘录『方案二』：科创50ETF5万(成本2.133)+亚威3万(12.31)+众合2万(9.52)，止损-8%。但今天三只全破止损：科创1.888(-11.5%)亚威10.17(-17.4%)众合7.89(-17.1%)。方案纪律已击穿需重审：众合最弱可减清、科创50契合半导体主线可留、亚威看机器人。要按行情更新，别硬扛。"}
+],
+"2026-08-14": [
+  {t:"14:45",who:"user",m:"（定时）尾盘前盯盘，查5只持仓有无减仓信号"},
+  {t:"14:45",who:"bot",m:"尾盘盯盘：宗申、宁德、中微、中芯、兴福5只持仓，查冲高回落/尾盘跳水/破支撑的减仓信号。"}
+],
+"2026-08-13": [
+  {t:"18:06",who:"user",m:"虚拟仓简报和盯盘信号"},
+  {t:"18:06",who:"bot",m:"虚拟仓总资产103.08万(+2.35%)、可用85.02万；持仓兆威(当日-1113)、晶方(当日-2713)等。盯盘检测中炬高新：当前18.98→未触发，已接近支撑区18.3-18.6。"}
+],
+"2026-08-10": [
+  {t:"16:21",who:"user",m:"（发图）用妙想金融分析一下这只个股"},
+  {t:"16:21",who:"bot",m:"已用妙想金融查询并分析该股，给出走势和买卖参考。"}
+],
+"2026-08-09": [
+  {t:"",who:"user",m:"上林民宿项目，给店定个名"},
+  {t:"",who:"bot",m:"民宿定名『咔嚓烦恼小院』（咔嚓小院），治愈流自带打卡梗；配好了门头Slogan、简介和小红书标题。"}
+],
+"2026-08-08": [
+  {t:"",who:"user",m:"盯盘中炬高新企稳信号（定时任务）"},
+  {t:"",who:"bot",m:"监控中炬高新(600872)是否出现可分批买入企稳信号：回踩18.3-18.6支撑区或放量站稳19.4。"}
+],
+"2026-08-07": [
+  {t:"",who:"user",m:"把今天看的几只股票把把关（中炬/宗申/哈药/阿石创/寒武纪/中巨芯）"},
+  {t:"",who:"bot",m:"排序：中炬高新=稳健最值得买(业绩修复+回购+PE24)、宗申轻仓试、哈药/阿石创/寒武纪/中巨芯(亏损+2连板+20%换手最危险)=不碰。中炬结论：强势股回调+筹码出清，非接飞刀，但短期抛压未尽，应分批建仓。"},
+  {t:"",who:"user",m:"（沙特、土耳其、巴基斯坦麦加协议相关）"},
+  {t:"",who:"bot",m:"8月7日沙特、土耳其、巴基斯坦在麦加签署《麦加共同防务协议》，聊了地缘与影响。"}
+],
+"2026-08-01": [
+  {t:"12:07",who:"user",m:"怎么又忘了用妙想金融（附图）"},
+  {t:"12:07",who:"bot",m:"用妙想按尾盘选股策略(近20日有涨停+10日线上翘+阴线回调+缩量)基于7-31收盘筛出5只。"}
+]
+};
+
+// 有记录且有明细的日期
+const RECORD_DAYS = Object.keys(DB);
+// 标记为"有记录"但明细待整理的其他日期
+const MARK_DAYS = [];
+
+const today = new Date();
+const y = today.getFullYear(), m = today.getMonth(); // 8-17 → 月索引
+let curYear = y, curMonth = m;
+
+const calBody = document.getElementById('calBody');
+const monthLabel = document.getElementById('monthLabel');
+function daysInMonth(Y,M){ return new Date(Y,M+1,0).getDate(); }
+function renderCal(){
+  monthLabel.textContent = curYear+'年'+(curMonth+1)+'月';
+  const first = new Date(curYear, curMonth, 1).getDay();
+  const days = daysInMonth(curYear, curMonth);
+  let html = `<div class="month-block"><div class="month-name">${curMonth+1}月</div><div class="cal-grid">`;
+  for(let i=0;i<first;i++) html += '<div class="cal-cell"></div>';
+  for(let d=1; d<=days; d++){
+    const key = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = (curYear===y && curMonth===m && d===today.getDate());
+    const hasRecord = RECORD_DAYS.includes(key);
+    const hasMark = MARK_DAYS.includes(key);
+    const cls = 'cal-cell' + (hasRecord||hasMark ? ' has' : '') + (isToday?' today':'');
+    const tag = isToday ? '<span class="today-tag">今天</span>' : '';
+    // 有记录的日期可点击进列表；仅标记无明细的点击提示待整理
+    if(hasRecord || hasMark){
+      html += `<div class="${cls}" onclick="openDay('${key}',${hasRecord})">${d}${tag}</div>`;
+    }else{
+      html += `<div class="${cls}">${d}${tag}</div>`;
+    }
+  }
+  html += '</div></div>';
+  calBody.innerHTML = html;
+}
+document.getElementById('prevM').onclick = ()=>{ curMonth--; if(curMonth<0){curMonth=11;curYear--;} renderCal(); };
+document.getElementById('nextM').onclick = ()=>{ curMonth++; if(curMonth>11){curMonth=0;curYear++;} renderCal(); };
+
+const chat = document.getElementById('chat');
+let currentDay = '';
+function openDay(key, hasDetail){
+  currentDay = key;
+  document.getElementById('viewCal').style.display = 'none';
+  document.getElementById('viewList').style.display = 'flex';
+  const ymd = key.split('-');
+  document.getElementById('listTitle').textContent = `${ymd[0]}年${+ymd[1]}月${+ymd[2]}日`;
+  document.getElementById('search').value = '';
+  const list = DB[key];
+  if(!hasDetail || !list){
+    chat.innerHTML = '<div class="empty">该日期有对话记录，明细正在整理中…</div>';
+    return;
+  }
+  renderList();
+}
+function renderList(){
+  const kw = document.getElementById('search').value.trim().toLowerCase();
+  const list = DB[currentDay] || [];
+  chat.innerHTML = '';
+  let shown = 0;
+  list.forEach(it=>{
+    const hit = !kw || it.m.toLowerCase().includes(kw);
+    if(!hit) return; shown++;
+    const row = document.createElement('div');
+    row.className = 'row '+ (it.who==='user'?'user':'bot');
+    const isU = it.who==='user';
+    row.innerHTML = `<div class="avatar">${isU?'🧔':'🦞'}</div>`+
+      `<div class="bubble${hit?' matched':''}"><span class="who-line">${isU?'【老大】':'【小龙虾】'} ${it.t||''}</span>${it.m}</div>`;
+    chat.appendChild(row);
+  });
+  if(kw && shown===0) chat.innerHTML = '<div class="empty">当天没有匹配到相关记录</div>';
+}
+document.getElementById('search').addEventListener('input', renderList);
+document.getElementById('btnBack').onclick = ()=>{
+  document.getElementById('viewList').style.display = 'none';
+  document.getElementById('viewCal').style.display = 'block';
+};
+renderCal();
+
+/* ===== 密码锁 ===== */
+const PASS_HASH="050eebba2ae8a6279eb331538d6db72f8ca72b70819dcba72e4169464e52307e";
+async function sha256(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+async function check(){const e=document.getElementById("pwErr");const pw=document.getElementById("pw").value;if(!pw){e.textContent="请输入密码";return;}const h=await sha256(pw);if(h===PASS_HASH){document.getElementById("lock").style.display="none";}else{e.textContent="密码错误，请重试";document.getElementById("pw").value="";}}
+document.getElementById("pwBtn").onclick=check;
+document.getElementById("pw").addEventListener("keydown",function(ev){if(ev.key==="Enter")check();});
+</script>
+</body>
+</html>
